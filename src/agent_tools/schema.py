@@ -14,7 +14,7 @@ class ArgsModelBuilder:
             if name not in hints:
                 raise ValueError(f"Missing type hint for parameter '{name}' in function '{self.func.__name__}'")
             default = ... if param.default is inspect.Parameter.empty else param.default
-            fields[name] = (param.annotation, default)
+            fields[name] = (hints[name], default)
         return create_model(self.model_name, **fields, __config__=ConfigDict(extra="forbid"))
   
     @staticmethod

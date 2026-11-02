@@ -10,6 +10,15 @@ from pydantic import ValidationError
 from .schema import ArgsModelBuilder 
 
 clean = ArgsModelBuilder.clean_schema
+from .errors import ToolValidationError, ToolExecutionError
+
+def _format_errors(exc : ValidationError)->str:
+    parts = []
+    for err in exc.errors():
+        loc = ".".join(str(x) for x in err["loc"]) or "arguments"
+        msg = err["msg"]
+        parts.append(f"{loc}: {msg}")
+    return "; ".join(parts)
 
 
 class Tool:
@@ -32,10 +41,26 @@ class Tool:
         }
 
     def parse_arguments(self , raw):
-        data = json.loads(raw) if isinstance(raw , str) else raw
-        model = self.args_model.model_validate(data)
+        if isinstance(raw , str):
+            try:
+                data = json.loads(raw) if raw.strip() else {}
+            except json.JSONDecodeError as e:
+                raise ToolValidationError(self.name , f"Invalid JSON: {e.msg}") from e  # from e keeps the original traceback for you , while messae is the short text for the model
+        else:
+            data = raw
+        if not isinstance(data , dict):
+            raise ToolValidationError(self.name , f"Expected a JSON object but got {type(data).__name__}")
+
+        try:
+            model = self.args_model.model_validate(data)
+        except ValidationError as e:
+            raise ToolValidationError(self.name , _format_errors(e)) from e
         return model.model_dump()
+    
 
     def invoke(self, raw):
         kwargs = self.parse_arguments(raw)
-        return self.func(**kwargs)
+        try:
+            return self.func(**kwargs)
+        except Exception as e:
+            raise ToolExecutionError(self.name , f"Function raised an exception: {e}") from e

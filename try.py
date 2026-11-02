@@ -2,6 +2,7 @@
 import json
 from pydantic import Field
 from agent_tools.tool import Tool
+from agent_tools.errors import ToolError
 def get_weather(city : str , unit : str = "celsius")->str:
     """Get the weather for a city."""
     return f"28 degree {unit} in {city}"
@@ -12,7 +13,22 @@ print(json.dumps(t.to_openai(), indent=2))
 # print(t.invoke('{"city": "New York"}'))
 # print(t.invoke({"city": "New York", "unit": "fahrenheit"}))
 # print(t.invoke({"cty":"jaipur"}))
-t.invoke('{"city": ')
+
+def boom() -> str:
+    """Always fails."""
+    raise RuntimeError("kaput")
 
 
+tests = [
+    (t, {"cty": "Jaipur"}),
+    (t, '{"city": '),
+    (t, '["not", "an", "object"]'),
+    (t, {"city": 5}),
+    (Tool(boom), "{}"),
+]
 
+for tool, raw in tests:
+    try:
+        tool.invoke(raw)
+    except ToolError as e:
+        print(type(e).__name__, "->", e.message)
