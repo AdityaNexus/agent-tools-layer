@@ -11,7 +11,7 @@ class ToolRegistry:
     def add(self , tool_or_func):
         tool = tool_or_func if isinstance(tool_or_func , Tool) else Tool(tool_or_func)
         if tool.name in self._tools:
-            raise ToolError( f"Tool with name '{tool.name}' already exists in the registry")
+            raise ValueError(f"Tool '{tool.name}' already registered")
         self._tools[tool.name] = tool
         return tool
 

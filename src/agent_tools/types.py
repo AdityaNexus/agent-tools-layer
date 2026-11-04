@@ -29,3 +29,16 @@ class ToolResult:
         if isinstance(self.output, str):
             return self.output
         return json.dumps(self.output,default = str)
+    def to_message(self,provider:str = "openai")->dict:
+        if provider == "anthropic":
+            return {
+                "type" : "tool_result" ,
+                "tool_use_id" : self.call_id,
+                "content" : self.content,
+                "is_error" : not self.ok,
+            }
+        return {
+            "role": "tool",
+            "tool_call_id": self.call_id,
+            "content": self.content,
+        }
