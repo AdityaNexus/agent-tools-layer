@@ -13,3 +13,8 @@ class ToolValidationError(ToolError):
 
 class ToolExecutionError(ToolError):
     """"the tool function raised an exception. The message is safe to show the LLM"""
+
+
+
+class ToolPermissionError(ToolError):
+    """"the tool function raised an exception. The message is safe to show the LLM"""

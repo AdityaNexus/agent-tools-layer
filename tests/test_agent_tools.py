@@ -116,6 +116,20 @@ def test_duplicate_name_rejected(registry):
         registry.register(get_weather)
 
 
+def test_execute_registered_tool(registry):
+    result = registry.execute(ToolCall("1", "add", {"a": 2, "b": 3}))
+
+    assert result.ok
+    assert result.content == "5"
+    assert result.duration_ms >= 0
+
+
+def test_registry_without_hooks_executes_tools(registry):
+    result = registry.execute(ToolCall("1", "get_weather", {"city": "Jaipur"}))
+
+    assert result.ok
+
+
 #-----provider glue--------
 def test_openai_roundtrip(registry):
     response = {

@@ -20,6 +20,7 @@ class ToolResult:
     ok : bool
     output : Any = field(default_factory=dict)
     error: str | None = None
+    duration_ms : float = 0.0
 
     @property
     def content(self)->str:

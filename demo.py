@@ -1,4 +1,4 @@
-from agent_tools import (ToolRegistry, parse_tool_calls , assistant_message , results_to_messages , get_text)
+from agent_tools import (ToolRegistry, parse_tool_calls , assistant_message , results_to_messages , get_text,ToolAgent, AgentRun)
 
 
 registry = ToolRegistry()
@@ -20,18 +20,18 @@ def fake_llm(messages , tools):
     return {"choices": [{"message": {"role": "assistant", "content": "All done."}}]}
 
 
-def run_agent(llm , registry , prompt , provider = "openai",max_steps = 5):
-    messages = [{"role":"user","content": prompt}]
-    for _ in range(max_steps):
-        respnse = llm(messages , registry.schemas())
-        calls = parse_tool_calls(respnse , provider)
-        if not calls:
-            return get_text(respnse , provider)
-        messages.append(assistant_message(respnse , provider))
-        result = registry.execute_all(calls)
-        for r in result:
-            print(f" {r.name}({r.call_id}) ok ={r.ok} -> {r.content}")
-        messages.extend(results_to_messages(result , provider))
-    return "stopped: max-steps reached"
 
-print(run_agent(fake_llm , registry , "add 2 and 3"))
+agent = ToolAgent(fake_llm , registry)
+run = agent.run("add 2 and 3")
+print(run.status , "|",run.steps,"steps |",run.answer)
+print([(r.name,r.ok) for r in run.tool_results])
+
+
+def always_bad_llm(messages , tools):
+    calls = [{"id": "x", "type": "function",
+              "function": {"name": "add", "arguments": '{"a": 1}'}}]
+    return {"choices": [{"message": {"role": "assistant", "content": None, "tool_calls": calls}}]}
+
+
+bad = ToolAgent(always_bad_llm, registry).run("loop forever")
+print(bad.status, "|", bad.steps, "steps")

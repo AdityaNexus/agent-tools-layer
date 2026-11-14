@@ -2,12 +2,11 @@
  description, and its argument model. The class has three jobs: 
  describe (JSON for the LLM), validate (check what the LLM sent),
    run (call your function)."""
-
 import inspect 
 import json
 from pydantic import ValidationError
 
-from .schema import ArgsModelBuilder 
+from .schema import ArgsModelBuilder ,parse_docstring
 
 clean = ArgsModelBuilder.clean_schema
 from .errors import ToolValidationError, ToolExecutionError
@@ -22,13 +21,17 @@ def _format_errors(exc : ValidationError)->str:
 
 
 class Tool:
-    def __init__(self , func , name = None , description = None):
+    """A tool is a function with a name, description, and argument model."""
+
+    def __init__(self, func, name=None, description=None, requires_confirmation: bool = False):
         self.func = func
         self.name = name or func.__name__
-        self.description = description or inspect.getdoc(func)
+        self.requires_confirmation = requires_confirmation
+        summary , doc_params = parse_docstring(inspect.getdoc(func))
+        self.description = description or summary
         if not self.description:
             raise ValueError(f"Function {self.name} has no docstring. Please provide a description.")
-        self.args_model = ArgsModelBuilder(func , f"{self.name}_args").build()
+        self.args_model = ArgsModelBuilder(func , f"{self.name}_args",doc_params).build()
 
     def to_openai(self):
         return {
@@ -55,12 +58,14 @@ class Tool:
             model = self.args_model.model_validate(data)
         except ValidationError as e:
             raise ToolValidationError(self.name , _format_errors(e)) from e
-        return model.model_dump()
+        return {name : getattr(model,name) for name in type(model).model_fields}
     
 
     def invoke(self, raw):
-        kwargs = self.parse_arguments(raw)
+        return self.call(self.parse_arguments(raw))
+
+    def call(self,kwargs):
         try:
             return self.func(**kwargs)
         except Exception as e:
-            raise ToolExecutionError(self.name , f"Function raised an exception: {e}") from e
+            raise ToolExecutionError(self.name , f"Tool raised an exception: {str(e)}") from e
