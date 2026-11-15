@@ -1,20 +1,22 @@
-
 import json
-from agent_tools import ToolRegistry , ToolCall
+
+from agent_tools import ToolCall, ToolRegistry
 
 registry = ToolRegistry()
-def get_weather(city:str , unit:str = "c")->str:
-    """"get the weather for the city"""
+
+
+def get_weather(city: str, unit: str = "c") -> str:
+    """ "get the weather for the city"""
     return f"The weather in {city} is 25 degrees {unit}"
 
 
 @registry.register
-def add(a:int , b:int)->int:
+def add(a: int, b: int) -> int:
     """add two numbers"""
     return a + b
 
-print(json.dumps(registry.schemas(), indent=2))
 
+print(json.dumps(registry.schemas(), indent=2))
 
 
 calls = [
@@ -25,5 +27,3 @@ calls = [
 ]
 for r in registry.execute_all(calls):
     print(r.call_id, r.ok, "->", r.content)
-
-

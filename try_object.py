@@ -33,7 +33,7 @@ notes = Notes()
 registry = ToolRegistry(hooks=[ConfirmationHook(ask=lambda tool, kwargs: False)])  # always say no
 print(registry.add_object(notes, prefix="notes_", confirm=["clear_notes"]))
 
-print(json.dumps(registry.schemas()[2], indent=2))     # which tool is this? check the name
+print(json.dumps(registry.schemas()[2], indent=2))  # which tool is this? check the name
 
 for call in [
     ToolCall("1", "notes_save_note", {"text": "buy milk"}),

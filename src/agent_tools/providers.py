@@ -1,4 +1,4 @@
-from .types import ToolCall, ToolResult
+from .types import ToolCall
 
 
 def _as_dict(obj):
@@ -18,11 +18,16 @@ def _openai_message(response):
 def parse_tool_calls(response, provider="openai"):
     if provider == "anthropic":
         blocks = _as_dict(response).get("content", [])
-        return [ToolCall(b["id"], b["name"], b.get("input") or {})
-                for b in blocks if b.get("type") == "tool_use"]
+        return [
+            ToolCall(b["id"], b["name"], b.get("input") or {})
+            for b in blocks
+            if b.get("type") == "tool_use"
+        ]
     msg = _openai_message(response)
-    return [ToolCall(tc["id"], tc["function"]["name"], tc["function"].get("arguments") or "{}")
-            for tc in msg.get("tool_calls") or []]
+    return [
+        ToolCall(tc["id"], tc["function"]["name"], tc["function"].get("arguments") or "{}")
+        for tc in msg.get("tool_calls") or []
+    ]
 
 
 def assistant_message(response, provider="openai"):

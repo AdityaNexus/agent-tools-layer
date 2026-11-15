@@ -1,8 +1,19 @@
 import inspect
-from pydantic import create_model , ConfigDict ,Field
-from pydantic.fields import FieldInfo
-from typing import get_type_hints
 import re
+from typing import get_type_hints
+
+from pydantic import ConfigDict, Field, create_model
+from pydantic.fields import FieldInfo
+
+
+def formate_errors(exc):
+    parts = []
+    for err in exc.errors():
+        loc = ".".join(str(x) for x in err["loc"]) or "arguments"
+        parts.append(f"{loc}: {err['msg']}")
+    return "; ".join(parts)
+
+
 class ArgsModelBuilder:
     def __init__(self, func, model_name: str, doc_params=None):
         self.func = func
@@ -11,7 +22,7 @@ class ArgsModelBuilder:
 
     def build(self):
         fname = getattr(self.func, "__name__", self.model_name)
-        hints = get_type_hints(self.func, include_extras=True)   # keep Annotated[...] metadata
+        hints = get_type_hints(self.func, include_extras=True)  # keep Annotated[...] metadata
         fields = {}
         for name, param in inspect.signature(self.func).parameters.items():
             if name not in hints:
@@ -19,7 +30,7 @@ class ArgsModelBuilder:
             default = ... if param.default is inspect.Parameter.empty else param.default
             description = self.doc_params.get(name)
             if description and not self._has_description(hints[name]):
-                default = Field(default, description=description)   # ... still means required
+                default = Field(default, description=description)  # ... still means required
             fields[name] = (hints[name], default)
         return create_model(self.model_name, **fields, __config__=ConfigDict(extra="forbid"))
 
@@ -42,7 +53,6 @@ class ArgsModelBuilder:
         return node
 
 
-    
 _SECTION = re.compile(
     r"^(Args|Arguments|Parameters|Returns?|Raises?|Yields?|Examples?|Notes?)\s*:\s*$", re.I
 )
@@ -54,12 +64,16 @@ def parse_docstring(doc):
     if not doc:
         return "", {}
     summary, params = [], {}
-    state, current = "summary", None          # state: summary -> args / other
+    state, current = "summary", None  # state: summary -> args / other
     for line in inspect.cleandoc(doc).splitlines():
         text = line.strip()
         section = _SECTION.match(text)
         if section:
-            state = "args" if section.group(1).lower() in ("args", "arguments", "parameters") else "other"
+            state = (
+                "args"
+                if section.group(1).lower() in ("args", "arguments", "parameters")
+                else "other"
+            )
             current = None
             continue
         if state == "summary":
@@ -69,6 +83,6 @@ def parse_docstring(doc):
             if m:
                 current = m.group(1)
                 params[current] = m.group(2).strip()
-            elif current:                      # continuation line of the previous parameter
+            elif current:  # continuation line of the previous parameter
                 params[current] += " " + text
     return " ".join(s for s in summary if s), params

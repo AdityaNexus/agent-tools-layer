@@ -1,11 +1,13 @@
 from pydantic import BaseModel
+
 from agent_tools import Tool
 
+
 class Event(BaseModel):
-    title : str 
+    title: str
 
 
-def schedule(event : Event , hour : int = 9)-> str:
+def schedule(event: Event, hour: int = 9) -> str:
     """Schedule an event.
 
     Args:

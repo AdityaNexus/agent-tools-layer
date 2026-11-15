@@ -1,16 +1,19 @@
 import logging
-from agent_tools import ConfirmationHook , LoggingHook,ToolCall , ToolRegistry
 
-logging.basicConfig(level=logging.INFO,format="%(name)s | %(message)s")
+from agent_tools import ConfirmationHook, LoggingHook, ToolCall, ToolRegistry
 
-registry = ToolRegistry(hooks =[
-    LoggingHook(),
-    ConfirmationHook(ask = lambda tool , kwargs : kwargs["path"]!="/important"),
-])
+logging.basicConfig(level=logging.INFO, format="%(name)s | %(message)s")
+
+registry = ToolRegistry(
+    hooks=[
+        LoggingHook(),
+        ConfirmationHook(ask=lambda tool, kwargs: kwargs["path"] != "/important"),
+    ]
+)
 
 
 @registry.register
-def add(a: int , b: int)->int:
+def add(a: int, b: int) -> int:
     """add two numbers"""
     return a + b
 
@@ -28,7 +31,6 @@ calls = [
 ]
 for r in registry.execute_all(calls):
     print(r.call_id, r.ok, r.content, f"{r.duration_ms:.3f}ms")
-
 
 
 unsafe = ToolRegistry()

@@ -1,0 +1,43 @@
+agent.run("Add 2 and 3")
+        │
+        ▼
+Create initial messages
+        │
+        ▼
+registry.schemas()
+        │
+        ▼
+Send messages + tool schemas to LLM
+        │
+        ▼
+LLM returns tool_calls
+        │
+        ▼
+parse_tool_calls()
+        │
+        ▼
+ToolCall("call_123", "add", '{"a":2,"b":3}')
+        │
+        ▼
+registry.execute_all()
+        │
+        ▼
+Validate arguments with Pydantic
+        │
+        ▼
+Call Python function: add(2, 3)
+        │
+        ▼
+ToolResult(output=5)
+        │
+        ▼
+Convert to {"role": "tool", ...}
+        │
+        ▼
+Send full conversation back to LLM
+        │
+        ▼
+LLM returns final text
+        │
+        ▼
+AgentRun(status="completed")

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Callable, Any
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 from .errors import ToolPermissionError
 
@@ -40,7 +41,6 @@ class ConfirmationHook(Hook):
     def _ask_in_terminal(tool: Tool, kwargs: dict[str, Any]) -> bool:
         answer = input(f"Allow {tool.name}({kwargs})? [y/N] ")
         return answer.strip().lower() == "y"
-
 
 
 class LoggingHook(Hook):
